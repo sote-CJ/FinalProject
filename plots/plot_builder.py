@@ -1,11 +1,12 @@
-# plots/plot_builder.py
 import numpy as np
 import pandas as pd
 import matplotlib
 matplotlib.use("Agg")  # 서버 환경용 백엔드
 import matplotlib.pyplot as plt
+from matplotlib import rcParams, cycler
 from sklearn.neighbors import NearestNeighbors
 from matplotlib.gridspec import GridSpec
+from matplotlib import patheffects as pe
 
 def min_max_norm(x, eps=1e-9):
     x = np.asarray(x, dtype=float)
@@ -102,34 +103,52 @@ def build_figure(
     df_top5["score_final"] = 0.5 * df_top5["score_thermal"] + 0.5 * df_top5["score_eco"]
     df_top5_ranked = df_top5.sort_values(by="score_final", ascending=False).reset_index(drop=True)
 
+    # 0) 보기 좋은 기본값(디자인만, 데이터 불변)
+    rcParams.update({
+        "figure.dpi": 140, "savefig.dpi": 140,
+        "font.size": 11, "axes.titlesize": 13, "axes.labelsize": 11,
+        "legend.fontsize": 10, "xtick.labelsize": 10, "ytick.labelsize": 10,
+        "axes.spines.top": False, "axes.spines.right": False,
+        "grid.color": "#d9d9d9", "grid.linestyle": "--", "grid.alpha": 0.6,
+        "axes.prop_cycle": cycler(color=["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"]),
+    })
+
     # 8) Figure/axes
-    fig = plt.figure(figsize=(18, 6))
-    gs = GridSpec(1, 3, width_ratios=[1.3, 1.1, 0.8], figure=fig)
+    fig = plt.figure(figsize=(19, 6), dpi=140, layout="constrained")
+    gs = GridSpec(1, 3, width_ratios=[1.3, 1.1, 0.9], wspace=0.40, figure=fig)
+    fig.set_constrained_layout_pads(w_pad=2/72, h_pad=2/72, wspace=0.40, hspace=0.28)
+
     ax1 = fig.add_subplot(gs[0, 0], projection="3d")
     ax2 = fig.add_subplot(gs[0, 1])
     ax3 = fig.add_subplot(gs[0, 2])
 
     # ax1: 3D 산점도
-    ax1.scatter(X_w[:, 0], X_w[:, 1], X_w[:, 2], c="lightgray", label="All Materials")
-    ax1.scatter(Y_w[0], Y_w[1], Y_w[2], c="red", marker="*", s=200, label="Your Input")
-    ax1.scatter(X_w[top_idx, 0], X_w[top_idx, 1], X_w[top_idx, 2], c="blue", s=100, edgecolors="black",
-                label=f"Top {n_neighbors} Neighbors")
+    ax1.scatter(X_w[:, 0], X_w[:, 1], X_w[:, 2], c="lightgray", alpha=0.7, s=18,
+                edgecolors="none", label="All Materials")
+    ax1.scatter(Y_w[0], Y_w[1], Y_w[2], c="red", marker="*", s=260,
+                linewidths=1.2, edgecolors="k", label="Your Input")
+    ax1.scatter(X_w[top_idx, 0], X_w[top_idx, 1], X_w[top_idx, 2], c="blue", s=110,
+                edgecolors="#1a1a1a", linewidths=0.6, label=f"Top {n_neighbors} Neighbors")
     for i in top_idx:
         ax1.plot([Y_w[0], X_w[i, 0]], [Y_w[1], X_w[i, 1]], [Y_w[2], X_w[i, 2]],
                  c="gray", linestyle="dotted", linewidth=1)
 
-    ymin, ymax = ax1.get_ylim(); y_range = ymax - ymin; base_offset = 0.02 * y_range
+    ymin, ymax = ax1.get_ylim(); y_range = ymax - ymin; base_offset = 0.04 * y_range
     offsets = np.linspace(-1, 1, len(top_idx)) * base_offset
     for (i, name, dy) in zip(top_idx, df_top5["name"], offsets):
         x, y, z = X_w[i, 0], X_w[i, 1], X_w[i, 2]
-        ax1.text(x, y + dy, z, str(name), color="blue", fontsize=9, ha="left", va="bottom",
-                 bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.7))
-
+        t = ax1.text(x, y + dy, z, str(name), color="blue", fontsize=9, ha="left", va="bottom",
+                 bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="#cccccc", alpha=0.85))
+        t.set_path_effects([pe.withStroke(linewidth=2.5, foreground="white")])
+    for pane in (ax1.xaxis.pane, ax1.yaxis.pane, ax1.zaxis.pane):
+        pane.set_facecolor("#f7f7f7"); pane.set_alpha(1.0)
+    ax1.grid(True, linewidth=0.6)
     ax1.set_xlabel("Theta_JA (normalized & weighted)")
     ax1.set_ylabel("Theta_JB (normalized & weighted)")
     ax1.set_zlabel("Theta_JT (normalized & weighted)")
-    ax1.set_title("3D Theta Space (Weighted KNN)")
-    ax1.legend(loc="upper left")
+    ax1.set_title("3D Theta Space (Weighted KNN)", y = 1)
+    ax1.legend(loc="upper left", bbox_to_anchor=(0.0, 1.12), frameon=False)
+    ax1.view_init(elev=22, azim=-55)
 
     # ax2: Thermal vs Eco 막대
     df_bar = df_top5_ranked.sort_values(by="score_thermal", ascending=False).reset_index(drop=True)
@@ -140,26 +159,43 @@ def build_figure(
     eco_plot = spread_for_plot(eco_scores)
 
     y_pos = np.arange(len(df_bar)); bar_h = 0.35
-    ax2.barh(y_pos - bar_h/2, thermal_plot, height=bar_h, label="Thermal", alpha=0.8)
-    ax2.barh(y_pos + bar_h/2, eco_plot, height=bar_h, label="Eco", alpha=0.8)
+    ax2.barh(y_pos - bar_h/2, thermal_plot, height=bar_h,
+             label="Thermal", color="#1f77b4", alpha=0.9,
+             edgecolor="#1a1a1a", linewidth=0.3)
+    ax2.barh(y_pos + bar_h/2, eco_plot, height=bar_h,
+             label="Eco", color="#ff7f0e", alpha=0.9,
+             edgecolor="#1a1a1a", linewidth=0.3)
     ax2.set_yticks(y_pos); ax2.set_yticklabels(names)
-    ax2.set_xlim(0, 1); ax2.invert_yaxis()
+    ax2.set_xlim(0, 1.02); ax2.invert_yaxis()
     ax2.set_xlabel("Score (0–1)"); ax2.set_title("Thermal vs Eco Scores (Top 5)")
+    
     for i, (tp, ep, ts, es) in enumerate(zip(thermal_plot, eco_plot, thermal_scores, eco_scores)):
-        ax2.text(tp + 0.02, y_pos[i] - bar_h/2, f"{ts:.2f}", va="center", fontsize=8)
-        ax2.text(ep + 0.02, y_pos[i] + bar_h/2, f"{es:.2f}", va="center", fontsize=8)
-    ax2.legend(loc="lower right"); ax2.grid(axis="x", linestyle="--", alpha=0.3)
+        ax2.annotate(f"{ts:.2f}",
+             xy=(tp/2, y_pos[i] - bar_h/2), xytext=(0, 0),
+             textcoords="offset points", va="center", ha="center",
+             fontsize=9, bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.85))
+        ax2.annotate(f"{es:.2f}",
+             xy=(ep/2, y_pos[i] + bar_h/2), xytext=(0, 0),
+             textcoords="offset points", va="center", ha="center",
+             fontsize=9, bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.85))
+    ax2.legend(loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad = 0, frameon=False)
+    ax2.margins(x=0.03); ax2.grid(axis="x", linestyle="--", alpha=0.6)
 
     # ax3: Top 3 표
     ax3.axis("off")
     top3 = df_top5_ranked.head(3).copy()
-    top3["LANK"] = np.arange(1, len(top3) + 1)
+    top3["RANK"] = np.arange(1, len(top3) + 1)
     top3["SCORE"] = (top3["score_final"] * 100).round().astype(int)
-    table_data = top3[["LANK", "name", "SCORE"]].values.tolist()
-    col_labels = ["LANK", "NAME", "SCORE"]
+    table_data = top3[["RANK", "name", "SCORE"]].values.tolist()
+    col_labels = ["RANK", "NAME", "SCORE"]
     table = ax3.table(cellText=table_data, colLabels=col_labels, cellLoc="center", loc="center")
-    table.auto_set_font_size(False); table.set_fontsize(10); table.scale(1.2, 2.0)
-    ax3.set_title("Top 3 Materials (Final Score)", pad=20)
+    table.auto_set_font_size(False); table.set_fontsize(9); table.scale(1.15, 1.8)
+    for (r, c), cell in table.get_celld().items():
+        cell.set_edgecolor("#7f7f7f"); cell.set_linewidth(0.8)
+        if r == 0:
+            cell.set_facecolor("#f2f2f2"); cell.set_text_props(weight="bold")
+        elif r % 2 == 1:
+            cell.set_facecolor("#fafafa")
+    ax3.set_title("Top 3 Materials (Final Score)", pad=28)
 
-    fig.tight_layout()
     return fig
