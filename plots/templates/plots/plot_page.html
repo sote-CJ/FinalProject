@@ -1,0 +1,75 @@
+<!-- plots/templates/plots/plot_page.html -->
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <title>추천 결과 시각화</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; margin: 24px; }
+      img { max-width: 100%; height: auto; border: 1px solid #ddd; }
+      .row { display: flex; gap: 12px; flex-wrap: wrap; }
+      .card { padding: 12px; border: 1px solid #eee; border-radius: 8px; }
+      label { display: block; margin: 4px 0; }
+      input { width: 100px; }
+    </style>
+  </head>
+  <body>
+    <h1>추천 결과 시각화</h1>
+
+    <!-- 기본 이미지를 바로 표시 -->
+    <p>기본 데이터로 생성된 그래프</p>
+    <img src="{% url 'plots:plot_png' %}?excel=capstone_result.xlsx" alt="plot">
+
+    <hr>
+
+    <!-- 파라미터 전송 폼(페이지 새로고침 방식) -->
+    <div class="card">
+      <h3>파라미터 조정</h3>
+      <form method="get" action="{% url 'plots:plot_page' %}">
+        <div class="row">
+          <div>
+            <strong>Thermal Input (°C)</strong>
+            <label>Ta <input type="number" name="Ta" step="any" value="{{ request.GET.Ta|default:'25' }}"></label>
+            <label>Tb <input type="number" name="Tb" step="any" value="{{ request.GET.Tb|default:'25' }}"></label>
+            <label>Tc <input type="number" name="Tc" step="any" value="{{ request.GET.Tc|default:'25' }}"></label>
+            <label>Tj <input type="number" name="Tj" step="any" value="{{ request.GET.Tj|default:'100' }}"></label>
+          </div>
+          <div>
+            <strong>Theta Weights (0~100)</strong>
+            <label>ka <input type="number" name="ka" step="any" value="{{ request.GET.ka|default:'33' }}"></label>
+            <label>kb <input type="number" name="kb" step="any" value="{{ request.GET.kb|default:'33' }}"></label>
+            <label>kt <input type="number" name="kt" step="any" value="{{ request.GET.kt|default:'34' }}"></label>
+          </div>
+          <div>
+            <strong>ESG Weights (0~100)</strong>
+            <label>k1 <input type="number" name="k1" step="any" value="{{ request.GET.k1|default:'25' }}"></label>
+            <label>k2 <input type="number" name="k2" step="any" value="{{ request.GET.k2|default:'25' }}"></label>
+            <label>k3 <input type="number" name="k3" step="any" value="{{ request.GET.k3|default:'25' }}"></label>
+            <label>k4 <input type="number" name="k4" step="any" value="{{ request.GET.k4|default:'25' }}"></label>
+          </div>
+          <div>
+            <strong>Excel</strong>
+            <label>파일명 <input type="text" name="excel" value="{{ request.GET.excel|default:'capstone_result.xlsx' }}"></label>
+          </div>
+        </div>
+        <p>
+          <button type="submit">그래프 새로고침</button>
+        </p>
+      </form>
+
+      {% comment %}
+      폼 제출 시 페이지가 리로드됩니다. 아래 <img>의 src에는 폼 값이 반영됩니다.
+      {% endcomment %}
+
+      {% comment %}
+      쿼리스트링을 그대로 넘겨 plot.png에 붙여 최신 이미지를 표시
+      {% endcomment %}
+      {% if request.GET %}
+        {% with qs=request.GET.urlencode %}
+          <img src="{% url 'plots:plot_png' %}?{{ qs }}" alt="plot (with params)">
+        {% endwith %}
+      {% endif %}
+    </div>
+  </body>
+</html>
