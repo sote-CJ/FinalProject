@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="result-section">
+  <div class="plot-area">
+    <h3>3D Theta Space (Weighted KNN)</h3>
+    <div id="theta3d" class="theta3d"></div>
+  </div>
+
+  <div class="table-area">
+    <h3>Top 3 Materials (Final Score)</h3>
+    <table id="top3-table">
+      <thead>
+        <tr>
+          <th>RANK</th>
+          <th>NAME</th>
+          <th>SCORE</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+  // Flask에서 넘겨준 result JSON
+  const RESULT = {{ result | tojson | safe }};
+</script>
+
+{% endblock %}

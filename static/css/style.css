@@ -1,0 +1,146 @@
+body {
+  margin: 0;
+  font-family: "Noto Sans KR", sans-serif;
+  background-color: #9da98a; /* 연녹색 배경 */
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+}
+
+.logo-img {
+  height: 100px;
+}
+
+.app-header {
+  height: 120px;
+  background-color: #9da98a;
+  border-bottom: 1px solid #d0d7c5;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+}
+
+.logo-text {
+  font-weight: 700;
+  font-size: 24px;
+}
+
+.app-main {
+  padding: 24px 40px;
+}
+
+.upload-section {
+  text-align: center;
+}
+
+.drop-zone {
+  margin: 16px auto;
+  background-color: #f5f7f4;
+  border-radius: 30px;
+  padding: 20px 40px;
+  display: inline-block;
+  cursor: pointer;
+  position: relative;
+}
+
+.drop-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.temp-inputs,
+.theta-weights {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.temp-inputs input,
+.theta-weights input {
+  border-radius: 20px;
+  border: none;
+  padding: 8px 16px;
+  min-width: 140px;
+}
+
+.slider-section {
+  margin: 40px auto;
+  max-width: 800px;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 24px 32px;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  margin: 12px 0;
+}
+
+.slider-label {
+  width: 120px;
+}
+
+.slider-row input[type="range"] {
+  flex: 1;
+  margin: 0 12px;
+}
+
+.slider-value {
+  width: 60px;
+  text-align: right;
+}
+
+.run-button {
+  margin-top: 20px;
+  padding: 10px 30px;
+  border-radius: 999px;
+  border: none;
+  background-color: #1f3a45;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.result-section {
+  display: flex;
+  gap: 32px;
+  margin-top: 40px;
+}
+
+.plot-area {
+  flex: 2;
+  background-color: white;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.theta3d {
+  width: 100%;
+  height: 480px;
+}
+
+.table-area {
+  flex: 1;
+  background-color: white;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+#top3-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+#top3-table th,
+#top3-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: center;
+}
